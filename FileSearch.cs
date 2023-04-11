@@ -1,34 +1,35 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 namespace homework17
 {
-   public class SearchParam : EventArgs
+   public class FileSearchEventArgs: CancelEventArgs
    {
-      public string Name { get; }
-      public bool Cancel { get; set; }
-
-      public SearchParam(string name) { Name = name; }
+      private string _name { get; init; }
+      public FileSearchEventArgs(string name) {_name = name; }
    }
 
    public class FileSearch
-   {
-      public event EventHandler<SearchParam> param;
+   {      
+      public event EventHandler<FileSearchEventArgs> FileFound;
 
-      public void Search(string path)
+      public void Search(string path, ref LinkedList<String> SearchResult)
       {
          foreach (var file in Directory.EnumerateFiles(path))
-         {            
-            SearchParam param = RaiseSearchResult(file);
-            if (param.Cancel) return;
+         {
+            SearchResult?.AddLast(file);
+            if (FileFound is not null)
+            {
+               var arg = new FileSearchEventArgs(file);
+               FileFound(this, arg);
+               if (arg.Cancel) 
+               {
+                  Console.WriteLine("Cancel event");
+                  return;
+               }
+            }            
          }
-      }
-
-      private SearchParam RaiseSearchResult(string name)
-      {
-         var param = new SearchParam(name);
-         param?.Invoke(this, param);
-         return param;
       }
    }
 
